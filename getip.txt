@@ -1,0 +1,185 @@
+Getip v.4b      Marques Johansson       displague@hotmail.com
+
+NAME
+	getip - return "set var=value" lines based on win32-api calls
+
+SYNOPSIS
+	getip [?hrudtTzZ.]
+
+DESCRIPTION
+	getip returns "SET VARNAME=VALUE" which can be added to the
+	system environment by running getip options>filename.bat; call
+	filename.bat.  The variables that are currently returned are ras
+	connections on a system, user, host, time, file, and registry
+	information.
+
+OPTIONS
+	?       basic help screen
+	v       version of this utility
+	h       host info
+	m       arp/mac address
+	r       RAS information
+	R       Registry value
+	u       User info
+	d       date
+	t       time
+	c       ctime
+	T       timezone
+	f       various file information fields
+	o       network resource info
+	z|Z|.   changes the capitalization of the output
+
+RETURNS
+	h       HOST            The system Host Name
+		NET_ID          Returns the third octet of your IP
+		IP              Reverse lookup of system Host Name
+	m       NODE            Uses the system RPC UUID to return the arp 
+				address of the primary nic
+	r       CONN_TOT        Number of open RAS Connections
+		CONN_[id]       Names of all open connections where [id] is 
+				the number of the open connection
+	u       USERNAME        Username of the logged in user; if this fails,
+				the user owning Z: will be returned
+	t       TIME            Military time: example 15:46:07
+	d       DATE            ISO date. example 1999.01.04
+	c       CTIME           example: Mon Jan 04 15:46:07 1999
+	T       DAYLIGHT        returns YES|NO based on Auto-adjust option
+		TIMEZONE        returns a text string representation of TZ
+	R       REGVAL          returns a value based on registry contents
+	v       MYVER           returns the version of getip
+	fp      DRIVE           ex: "getip fp c:\ " returns SET DRIVE=c
+		SERVER          ex: "getip fp \\this\that\path\file" returns 
+				SET SERVER=this
+		SHARE           the above returns "SET SHARE=that"
+		FILEPATH        the above returns "SET FILEPATH=path"
+		FILENAME        the above returns "SET FILENAME=file"
+	fd      FILEDATE        obvious
+	ft      FILETIME         "
+	fs      FILESIZE         " (no delimeters)
+	fb      BIGGER          returns BIGGER=name where name is the larger 
+				of two files passed seperated by a space.
+	fn      NEWER           returns NEWER=name where name is the file with 
+				the later creation date.
+	or      RESOURCE        returns \\server\share info for the given drive
+	op      SERVER|SHARE    " but parsed into two variables
+	z                       sets all following output to lowercase
+	Z                       sets all following output to uppercase
+	.                       sets all following output to its normal case
+
+EXAMPLES
+	C:\>getip vhrudtTZTzT.T
+	set MYVER=.4a
+	set IP=141.232.80.58
+	set NET_ID=80
+	set HOSTNAME=e30675
+	set CONN_TOT=1
+	set CONN_1="My Internet Connection"
+	set USERNAME=mjohans
+	set DATE=1999.01.04
+	set TIME=15:49:30
+	set CTIME=Mon Jan 04 15:49:30 1999
+	set CTIME=MON JAN 04 15:49:30 1999
+	set CTIME=mon jan 04 15:49:30 1999
+	set CTIME=Mon Jan 04 15:49:30 1999
+	C:\>getip fd c:\autoexec.bat fp \\server\share\path\path2\file.ext
+	set FILEDATE=1998.10.28
+	set SERVER=server
+	set SHARE=share
+	set FILEPATH=path\path2
+	set FILENAME=file.ext
+	C:\>getip R HKEY_LOCAL_MACHINE\SOFTWARE...\ProgramFilesDir
+	set REGVAL="C:\Program Files"
+
+	-- or as a login script --
+	@echo off
+	 getipwin rhTu fp %0>%temp%\t.bat
+	 call %temp%\t.bat
+	 echo %CTIME% %USERNAME% Logged in to %HOSTNAME%>>%windir%\mydomain.log
+	 if "CONN_TOT" == "1" goto remote
+	 if NOT "%SERVER%"=="" set source=\\%server%\%share%
+	 if "%SERVER%"=="" set source=%DRIVE%:
+	 if NOT "%FILEPATH%"=="" set source=%source%\%filepath%
+	 %source%\someoperation.exe
+	 %source%\somemore.exe
+	 call %source%\updates.bat
+	goto end
+	:remote
+	 echo Remote connection detected - keeping it quick.
+	:end
+
+FILE FUNCTIONS
+	The file compare functions return errorlevels to make it easier to
+	use in a batch script.
+
+	ex: getip fn c:\autoexec.bat c:\config.sys
+
+	if autoexec.bat is newer or the same as config.sys, 0 will be returned
+	if autoexec.bat is older than config.sys, 1 will be the errorlevel
+	if autoexec.bat or config.sys are missing, 0 or 1 will be returned 
+	 indicating which is the existing file.
+	if autoexec.bat or config.sys are there but not accessable 
+	 (no permission), then 2 will be returned..
+	
+	REM test.bat This demonstrates how to use the file functions of getip
+	getip fn c:\progra~1\mcafee\scan.exe \\server\software\mcafee\scan.exe
+	if ERRORLEVEL 2 goto error
+	if ERRORLEVEL 1 goto setup
+	goto end
+	:setup
+	  \\server\software\mcafee\setup
+	goto end
+	:error
+	  echo Scan is not accessable, please inform the network administrator
+	:end
+
+CHANGES
+	.1      returned only host info
+	.2      added user info and ras info
+	.3      fixed user info to work during login
+	.3a     fixed host info to work on win95 + cleaned getip.txt
+	.4      added file date/time/parse/compare size/compare time
+		added registry getting functions
+		added timezone function
+		added getip version parameter
+		seperated getip into getip.c and getip.h
+		renamed all getipwin refs to getip
+		changed various parameter letters
+		changed from euro-date to ISO-date
+	.4a     fixed docs
+		added network resource option
+	.4b     modified return values for file funcs
+		added 'm' for mac address
+		fixed R to error with no params
+		added ou for owner of a resource
+		removed all ""s from SETs
+
+NOTES
+	Use this utility however you see fit..
+	There are many more variables that I would like to dump out,
+	please make any suggestions to the email address below.
+	
+	Getip is free software; you can redistribute it and/or modify it under
+	the terms of the GNU Library General Public License as published by the
+	Free Software Foundation.
+
+AUTHORS
+	Marques Johansson        (beginning->current)   displague@hotmail.com
+
+FILES
+	getip.exe       the executable
+	getip.txt       this documentation
+	getip.c         the MSVC C source for most functions
+	getip-nt.c      unused nt-only source (testing)
+	main.c          the start-up module
+	getip.h         the header file to accompany the source
+
+BUGS
+	The file name parsing is definetly not complete.
+	
+TODO
+	add P to put registry entries in
+	clean up the code and add more error checking
+	make sure all output runs through the docase()
+	
+REPORTING BUGS
+	Report bugs to <displague@hotmail.com>.
